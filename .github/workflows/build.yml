@@ -40,30 +40,51 @@ jobs:
         #define DIODE_DIRECTION COL2ROW
         EOF
         
-        # 5. 【精準修正】補齊正確的 handwired/ 完整路徑，建立實體 C 語言頭文件
+        # 5. 補齊正確的 handwired/ 完整路徑，建立實體 C 語言頭文件
         echo '#include "fc980_ec_via.h"' > keyboards/handwired/fc980_ec_via/fc980_ec_via.c
-        echo '#pragma once' > keyboards/handwired/fc980_ec_via/fc980_ec_via.h
         
-        # 6. 現場寫入符合標準 QMK 陣列規範、填滿 6x16 的 keymap.c 檔
+        # 6. 強制寫入手焊專案唯一合法的 LAYOUT_ortho_6x16 實體巨集頭文件
+        cat << 'EOF' > keyboards/handwired/fc980_ec_via/fc980_ec_via.h
+        #pragma once
+        #include "quantum.h"
+        #define LAYOUT_ortho_6x16( \
+            k00, k01, k02, k03, k04, k05, k06, k07, k08, k09, k0a, k0b, k0c, k0d, k0e, k0f, \
+            k10, k11, k12, k13, k14, k15, k16, k17, k18, k19, k1a, k1b, k1c, k1d, k1e, k1f, \
+            k20, k21, k22, k23, k24, k25, k26, k27, k28, k29, k2a, k2b, k2c, k2d, k2e, k2f, \
+            k30, k31, k32, k33, k34, k35, k36, k37, k38, k39, k3a, k3b, k3c, k3d, k3e, k3f, \
+            k40, k41, k42, k43, k44, k45, k46, k47, k48, k49, k4a, k4b, k4c, k4d, k4e, k4f, \
+            k50, k51, k52, k53, k54, k55, k56, k57, k58, k59, k5a, k5b, k5c, k5d, k5e, k5f  \
+        ) { \
+            { k00, k01, k02, k03, k04, k05, k06, k07, k08, k09, k0a, k0b, k0c, k0d, k0e, k0f }, \
+            { k10, k11, k12, k13, k14, k15, k16, k17, k18, k19, k1a, k1b, k1c, k1d, k1e, k1f }, \
+            { k20, k21, k22, k23, k24, k25, k26, k27, k28, k29, k2a, k2b, k2c, k2d, k2e, k2f }, \
+            { k30, k31, k32, k33, k34, k35, k36, k37, k38, k39, k3a, k3b, k3c, k3d, k3e, k3f }, \
+            { k40, k41, k42, k43, k44, k45, k46, k47, k48, k49, k4a, k4b, k4c, k4d, k4e, k4f }, \
+            { k50, k51, k52, k53, k54, k55, k56, k57, k58, k59, k5a, k5b, k5c, k5d, k5e, k5f }  \
+        }
+        EOF
+        
+        # 7. 【終極修正】將鍵位地圖完全更正為合法合規的 LAYOUT_ortho_6x16 陣列架構
         cat << 'EOF' > keyboards/handwired/fc980_ec_via/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-            [0] = {
-                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
-                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
-                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
-                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
-                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
-                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A }
-            }
+            [0] = LAYOUT_ortho_6x16(
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A
+            )
         };
         EOF
         
-        # 7. 使用 Linux 底層 make 強制獨立編譯
-        make handwired/fc980_ec_via:default
+        # 8. 執行編譯，並加上強行阻斷，如果出錯立刻原地噴出紅字日誌
+        make handwired/fc980_ec_via:default || exit 1
 
     - name: Upload Finished Firmware
       uses: actions/upload-artifact@v4
       with:
         name: fc980-ec-via-firmware
-        path: qmk_firmware/.build/*.bin
+        # 全深全域追蹤，不放過任何一個產出的 .bin 檔案
+        path: qmk_firmware/**/*.bin
