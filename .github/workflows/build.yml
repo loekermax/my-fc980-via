@@ -6,24 +6,39 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout custom config
-      uses: actions/upload-artifact@v4
-      with:
-        path: custom_config
-
-    - name: Install QMK and Compile
+    - name: Set up QMK Environment
       run: |
         python3 -m pip install qmk
         qmk setup -y
-        # 建立本地 QMK 鍵盤專案目錄
+
+    - name: Create Keyboard Files and Compile
+      run: |
+        # 1. 直接在雲端建立 fc980_ec 專案目錄
         mkdir -p qmk_firmware/keyboards/fc980_ec
-        # 將剛剛我們在網頁寫好的 rules.mk 與 config.h 複製到 QMK 編譯目錄中
-        cp custom_config/rules.mk qmk_firmware/keyboards/fc980_ec/
-        cp custom_config/config.h qmk_firmware/keyboards/fc980_ec/
-        # 建立必要的空白輔助檔
+        
+        # 2. 現場直接寫入 rules.mk 內容 (強制開啟 VIA)
+        cat << 'EOF' > qmk_firmware/keyboards/fc980_ec/rules.mk
+        MCU = STM32F401
+        BOOTLOADER = stm32-dfu
+        VIA_ENABLE = yes
+        LTO_ENABLE = yes
+        EOF
+        
+        # 3. 現場直接寫入 config.h 內容 (盲測用 6x16 矩陣引腳)
+        cat << 'EOF' > qmk_firmware/keyboards/fc980_ec/config.h
+        #pragma once
+        #define MATRIX_ROWS 6
+        #define MATRIX_COLS 16
+        #define MATRIX_ROW_PINS { A0, A1, A2, A3, A4, A5 }
+        #define MATRIX_COL_PINS { B0, B1, B2, B3, B4, B5, B6, B7, B8, B9, B10, B12, B13, B14, B15, A8 }
+        #define DIODE_DIRECTION COL2ROW
+        EOF
+        
+        # 4. 建立必要的 C 語言輔助空白檔
         echo '#include "fc980_ec.h"' > qmk_firmware/keyboards/fc980_ec/fc980_ec.c
         echo '#pragma once' > qmk_firmware/keyboards/fc980_ec/fc980_ec.h
-        # 執行編譯
+        
+        # 5. 進入目錄並強制執行 QMK 編譯
         cd qmk_firmware
         qmk compile -kb fc980_ec -km default
 
