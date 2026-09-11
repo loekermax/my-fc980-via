@@ -6,16 +6,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - name: Set up Ubuntu System Packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-avr binutils-avr avr-libc gcc-arm-none-eabi libnewlib-arm-none-eabi git python3-pip
+
     - name: Set up QMK Environment
       run: |
         python3 -m pip install qmk
         qmk setup -y -H ./qmk_firmware
 
-    - name: Force Overwrite Pure VIA Project and Compile
+    - name: Force Remake Original Project and Compile
       run: |
         cd qmk_firmware
         
-        # 1. 現場將 wilba 官方 VIA 專案的 info.json 覆蓋為我們的 STM32F401 6x16 盲測規格 (引腳回歸標準代號)
         cat << 'EOF' > keyboards/wilba_tech/wt60_a/info.json
         {
           "keyboard_name": "FC980 EC VIA REMAKE",
@@ -31,17 +35,20 @@ jobs:
           "processor": "STM32F401",
           "bootloader": "stm32-dfu",
           "features": {
-            "via": true,
             "lto": true
           }
         }
         EOF
         
-        # 2. 現場寫入對齊 6x16 基礎矩陣的 keymap.c 檔
+        cat << 'EOF' > keyboards/wilba_tech/wt60_a/rules.mk
+        VIA_ENABLE = yes
+        LTO_ENABLE = yes
+        EOF
+        
         cat << 'EOF' > keyboards/wilba_tech/wt60_a/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-            [0] = {
+            = {
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
@@ -52,7 +59,6 @@ jobs:
         };
         EOF
         
-        # 3. 呼叫官方正式名義，執行純淨無燈光干擾的 QMK 編譯
         qmk compile -kb wilba_tech/wt60_a -km default
 
     - name: Upload Finished Firmware
