@@ -9,6 +9,7 @@ jobs:
     - name: Set up QMK Environment
       run: |
         python3 -m pip install qmk
+        # 強制將 QMK 原始碼下載到當前工作目錄的 qmk_firmware 資料夾中
         qmk setup -y -H ./qmk_firmware
 
     - name: Use Official Command to Create Project and Compile
@@ -18,8 +19,9 @@ jobs:
         # 1. 呼叫官方標準命令初始化專案結構
         qmk new-keyboard -kb fc980_ec -t STM32F401 -u qmk
         
-        # 2. 徹底刪除官方生成的預設 info.json，防止它干擾我們
+        # 2. 徹底拔除官方偷偷建立的隱藏 json 檔，防止它們用舊格式干擾編譯
         rm -f keyboards/fc980_ec/info.json
+        rm -f keyboards/fc980_ec/keyboard.json
         
         # 3. 現場寫入 C 語言版 rules.mk (強制開啟 VIA 與指定架構)
         cat << 'EOF' > keyboards/fc980_ec/rules.mk
@@ -29,13 +31,13 @@ jobs:
         LTO_ENABLE = yes
         EOF
         
-        # 4. 現場寫入 C 語言版 config.h (盲測用 6x16 矩陣引腳)
+        # 4. 現場寫入全新符合新版 QMK 規範的 config.h (盲測用 6x16 矩陣引腳，改為簡短命名 B0, A0)
         cat << 'EOF' > keyboards/fc980_ec/config.h
         #pragma once
         #define MATRIX_ROWS 6
         #define MATRIX_COLS 16
-        #define MATRIX_ROW_PINS { GPIOA_0, GPIOA_1, GPIOA_2, GPIOA_3, GPIOA_4, GPIOA_5 }
-        #define MATRIX_COL_PINS { GPIOB_0, GPIOB_1, GPIOB_2, GPIOB_3, GPIOB_4, GPIOB_5, GPIOB_6, GPIOB_7, GPIOB_8, GPIOB_9, GPIOB_10, GPIOB_12, GPIOB_13, GPIOB_14, GPIOB_15, GPIOA_8 }
+        #define MATRIX_ROW_PINS { A0, A1, A2, A3, A4, A5 }
+        #define MATRIX_COL_PINS { B0, B1, B2, B3, B4, B5, B6, B7, B8, B9, B10, B12, B13, B14, B15, A8 }
         #define DIODE_DIRECTION COL2ROW
         EOF
         
@@ -43,7 +45,7 @@ jobs:
         cat << 'EOF' > keyboards/fc980_ec/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-            [0] = {
+            = {
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
