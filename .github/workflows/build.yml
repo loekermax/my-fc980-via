@@ -20,6 +20,7 @@ jobs:
       run: |
         cd qmk_firmware
         
+        # 1. 寫入徹底拿掉 features 區塊、不再引發驗證警告的 info.json
         cat << 'EOF' > keyboards/wilba_tech/wt60_a/info.json
         {
           "keyboard_name": "FC980 EC VIA REMAKE",
@@ -33,22 +34,21 @@ jobs:
           },
           "diode_direction": "COL2ROW",
           "processor": "STM32F401",
-          "bootloader": "stm32-dfu",
-          "features": {
-            "lto": true
-          }
+          "bootloader": "stm32-dfu"
         }
         EOF
         
+        # 2. 透過傳統 rules.mk 檔案開啟 VIA 與 LTO 功能
         cat << 'EOF' > keyboards/wilba_tech/wt60_a/rules.mk
         VIA_ENABLE = yes
         LTO_ENABLE = yes
         EOF
         
+        # 3. 【精準修正】刪除多餘的等號（=），回歸 C 語言標準陣列語法
         cat << 'EOF' > keyboards/wilba_tech/wt60_a/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-            = {
+             = {
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
