@@ -1,0 +1,34 @@
+name: Build QMK VIA Firmware
+
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout custom config
+      uses: actions/checkout@v4
+      with:
+        path: custom_config
+
+    - name: Install QMK and Compile
+      run: |
+        python3 -m pip install qmk
+        qmk setup -y
+        # 建立本地 QMK 鍵盤專案目錄
+        mkdir -p qmk_firmware/keyboards/fc980_ec
+        # 將剛剛我們在網頁寫好的 rules.mk 與 config.h 複製到 QMK 編譯目錄中
+        cp custom_config/rules.mk qmk_firmware/keyboards/fc980_ec/
+        cp custom_config/config.h qmk_firmware/keyboards/fc980_ec/
+        # 建立必要的空白輔助檔
+        echo '#include "fc980_ec.h"' > qmk_firmware/keyboards/fc980_ec/fc980_ec.c
+        echo '#pragma once' > qmk_firmware/keyboards/fc980_ec/fc980_ec.h
+        # 執行編譯
+        cd qmk_firmware
+        qmk compile -kb fc980_ec -km default
+
+    - name: Upload Firmware Artifact
+      uses: actions/artifacts@v4
+      with:
+        name: fc980-ec-via-firmware
+        path: qmk_firmware/.build/*.bin
