@@ -20,10 +20,10 @@ jobs:
       run: |
         cd qmk_firmware
         
-        # 1. 徹底砸碎官方原本的 info.json 檔，不讓它的舊規格干擾我們
+        # 1. 徹底砸碎官方原本的 info.json 檔
         rm -f keyboards/wilba_tech/wt60_a/info.json
         
-        # 2. 透過傳統 rules.mk 檔案強制指定 STM32F401 架構並解鎖 VIA
+        # 2. 強制指定 STM32F401 架構並解鎖 VIA
         cat << 'EOF' > keyboards/wilba_tech/wt60_a/rules.mk
         MCU = STM32F401
         BOOTLOADER = stm32-dfu
@@ -31,7 +31,7 @@ jobs:
         LTO_ENABLE = yes
         EOF
         
-        # 3. 透過傳統 config.h 寫入強硬的硬體規格 (強制定義 6 行 16 列)
+        # 3. 寫入 6x16 盲測引腳
         cat << 'EOF' > keyboards/wilba_tech/wt60_a/config.h
         #pragma once
         #define MATRIX_ROWS 6
@@ -41,7 +41,7 @@ jobs:
         #define DIODE_DIRECTION COL2ROW
         EOF
         
-        # 4. 寫入 96 顆按鍵完全填滿的 keymap.c 檔
+        # 4. 寫入滿額 96 顆鍵的 keymap.c 檔
         cat << 'EOF' > keyboards/wilba_tech/wt60_a/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -56,12 +56,15 @@ jobs:
         };
         EOF
         
-        # 5. 【重大修正】後面加上 || true，讓系統忽略最後 dfu-suffix 工具缺失的警告，強行完工！
+        # 5. 忽略 dfu 後綴工具警告，強制完工
         qmk compile -kb wilba_tech/wt60_a -km default || true
 
     - name: Upload Finished Firmware
       uses: actions/upload-artifact@v4
       with:
         name: fc980-ec-via-firmware
-        # 【全域遞迴搜尋】只要檔案在 .build 資料夾裡，不管名字是什麼通通抓出來打包！
-        path: qmk_firmware/.build/*.bin
+        # 【滴水不漏全域搜捕】將路徑擴大到整個工作資料夾下所有的 .bin, .hex, .elf，絕對叫它無處可躲！
+        path: |
+          qmk_firmware/**/*.bin
+          qmk_firmware/**/*.hex
+          qmk_firmware/**/*.elf
