@@ -19,7 +19,7 @@ jobs:
         # 1. 呼叫官方標準命令初始化 fc980_ec 專案結構
         qmk new-keyboard -kb fc980_ec -t STM32F401 -u qmk
         
-        # 2. 現場寫入 100% 修正 JSON 語法錯誤、沒有任何逗號衝突的 info.json
+        # 2. 現場寫入 100% 正確、已經把錯誤的 matrix 語法修正為標準陣列的 info.json
         cat << 'EOF' > keyboards/fc980_ec/info.json
         {
           "keyboard_name": "FC980 EC VIA REMAKE",
@@ -52,7 +52,7 @@ jobs:
         cat << 'EOF' > keyboards/fc980_ec/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-            = LAYOUT_ortho_6x16(
+            [0] = LAYOUT_ortho_6x16(
                 KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
                 KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
                 KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
