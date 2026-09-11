@@ -9,13 +9,14 @@ jobs:
     - name: Set up QMK Environment
       run: |
         python3 -m pip install qmk
-        qmk setup -y
+        # 強制將 QMK 原始碼下載到當前工作目錄的 qmk_firmware 資料夾中
+        qmk setup -y -H ./qmk_firmware
 
     - name: Modify Existing Project and Compile
       run: |
         cd qmk_firmware
         
-        # 1. 現場寫入 100% 符合官方語法、沒有任何逗號錯誤的 info.json 覆蓋原本官方的專案
+        # 1. 現場寫入 info.json 覆蓋原本官方的專案
         cat << 'EOF' > keyboards/acheron/shark/info.json
         {
           "keyboard_name": "FC980 EC VIA REMAKE",
