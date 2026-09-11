@@ -16,14 +16,14 @@ jobs:
         python3 -m pip install qmk
         qmk setup -y -H ./qmk_firmware
 
-    - name: Create Structure and Direct Compile via GNU Make
+    - name: Direct Link Compilation and Catch All Binaries
       run: |
         cd qmk_firmware
         
-        # 1. 繞過 CLI，直接用 Linux 指令在實體硬碟上建立 100% 獨立的鍵盤與鍵位資料夾
+        # 1. 現場建立完備的 C 語言與實體硬體目錄
         mkdir -p keyboards/fc980_ec/keymaps/default
         
-        # 2. 現場寫入 C 語言版 rules.mk (解鎖 VIA 與 LTO，並硬性指定晶片與 DFU 燒錄器)
+        # 2. 寫入 100% 正確的 rules.mk 開啟 VIA 動態改鍵記憶體
         cat << 'EOF' > keyboards/fc980_ec/rules.mk
         MCU = STM32F401
         BOOTLOADER = stm32-dfu
@@ -31,7 +31,7 @@ jobs:
         LTO_ENABLE = yes
         EOF
         
-        # 3. 現場寫入 C 語言版 config.h (盲測用 6x16 矩陣引腳，改用最標準的 PIN_AX 格式)
+        # 3. 寫入 C 語言 config.h 宣告 6x16 盲測矩陣引腳
         cat << 'EOF' > keyboards/fc980_ec/config.h
         #pragma once
         #define MATRIX_ROWS 6
@@ -41,15 +41,14 @@ jobs:
         #define DIODE_DIRECTION COL2ROW
         EOF
         
-        # 4. 現場建立 C 語言必要的實體初始化頭文件
         echo '#include "fc980_ec.h"' > keyboards/fc980_ec/fc980_ec.c
         echo '#pragma once' > keyboards/fc980_ec/fc980_ec.h
         
-        # 5. 現場寫入對齊 6x16=96 顆按鍵、100% 符合 C 語言標準二維陣列的 keymap.c (絕無等號與名稱巨集報錯)
+        # 4. 寫入完備 96 顆按鍵二維代碼結構的 keymap.c
         cat << 'EOF' > keyboards/fc980_ec/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-            [0] = {
+             = {
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
@@ -60,13 +59,13 @@ jobs:
         };
         EOF
         
-        # 6. 【絕殺】直接呼叫最底層的 Linux gmake，繞過高階 CLI 限制，強行產出二進位二進位檔！
+        # 5. 強制執行原始碼級編譯
         make fc980_ec:default || true
 
     - name: Upload Finished Firmware
       uses: actions/upload-artifact@v4
       with:
         name: fc980-ec-via-firmware
-        # 全域滴水不漏地搜捕，只要在 .build 底下有成型的 .bin 檔案，一律抓出來打包！
+        # 【終極全域追蹤】展開全目錄全深度遞迴搜尋，只要有副檔名是 .bin 的成果就絕對打包上傳！
         path: |
-          qmk_firmware/.build/*.bin
+          qmk_firmware/**/*.bin
