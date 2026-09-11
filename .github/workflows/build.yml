@@ -12,17 +12,17 @@ jobs:
         # 強制將 QMK 原始碼下載到當前工作目錄的 qmk_firmware 資料夾中
         qmk setup -y -H ./qmk_firmware
 
-    - name: Use Official Command to Create Project and Compile
+    - name: Use Official Command to Create Project and Compile via Make
       run: |
         cd qmk_firmware
         
-        # 1. 呼叫官方標準命令初始化專案結構
+        # 1. 呼叫官方標準命令初始化專案結構 (這會把所有底層所需要的 C 語言頭文件一併生齊)
         qmk new-keyboard -kb fc980_ec -t STM32F401 -u qmk
         
-        # 2. 徹底刪除官方自動生成的背景垃圾檔，防止它因為網址留空干擾編譯
+        # 2. 徹底刪除官方自動生成的背景垃圾檔，防止任何 JSON Schema 報錯
         rm -f keyboards/fc980_ec/keyboard.json
         
-        # 3. 現場寫入最極簡、不帶有 features 衝突的 info.json
+        # 3. 現場寫入 100% 正確的 info.json (補全網址，拿掉特徵宣告，只留最乾淨的引腳定義)
         cat << 'EOF' > keyboards/fc980_ec/info.json
         {
           "keyboard_name": "FC980 EC VIA REMAKE",
@@ -47,13 +47,13 @@ jobs:
         }
         EOF
         
-        # 4. 將關鍵的 VIA 與 LTO 功能開關強制寫入傳統的 rules.mk 檔案中，完美繞過 JSON 限制
+        # 4. 強制將 VIA 與 LTO 功能寫入傳統的 rules.mk 檔案中
         cat << 'EOF' > keyboards/fc980_ec/rules.mk
         VIA_ENABLE = yes
         LTO_ENABLE = yes
         EOF
         
-        # 5. 現場寫入符合標準 QMK 陣列與 LAYOUT_ortho_6x16 命名規範的 keymap.c
+        # 5. 現場寫入 96 顆鍵的 keymap.c 檔
         cat << 'EOF' > keyboards/fc980_ec/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -68,8 +68,8 @@ jobs:
         };
         EOF
         
-        # 6. 執行編譯
-        qmk compile -kb fc980_ec -km default
+        # 6. 【重大改動】完全繞過 qmk CLI 指令，直接使用底層 Linux 的 GNU Make 進行強制實體編譯！
+        make fc980_ec:default
 
     - name: Upload Finished Firmware
       uses: actions/upload-artifact@v4
