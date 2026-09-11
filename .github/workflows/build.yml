@@ -20,10 +20,10 @@ jobs:
       run: |
         cd qmk_firmware
         
-        # 1. 現場建立一個最傳統、不具備任何 JSON 審查的測試資料夾
+        # 1. 現場建立專案資料夾
         mkdir -p keyboards/fc980_ec/keymaps/default
         
-        # 2. 現場寫入 C 語言版 rules.mk (強制開啟 VIA 與指定架構)
+        # 2. 現場寫入 C 語言版 rules.mk
         cat << 'EOF' > keyboards/fc980_ec/rules.mk
         MCU = STM32F401
         BOOTLOADER = stm32-dfu
@@ -31,7 +31,7 @@ jobs:
         LTO_ENABLE = yes
         EOF
         
-        # 3. 現場寫入 C 語言版 config.h (盲測用 6x16 矩陣引腳)
+        # 3. 現場寫入 C 語言版 config.h
         cat << 'EOF' > keyboards/fc980_ec/config.h
         #pragma once
         #define MATRIX_ROWS 6
@@ -41,15 +41,15 @@ jobs:
         #define DIODE_DIRECTION COL2ROW
         EOF
         
-        # 4. 現場寫入相容的基礎 c 語言頭文件
+        # 4. 現場寫入相容的基礎頭文件
         echo '#include "fc980_ec.h"' > keyboards/fc980_ec/fc980_ec.c
         echo '#pragma once' > keyboards/fc980_ec/fc980_ec.h
         
-        # 5. 現場寫入符合標準 QMK 陣列規範的 keymap.c 檔 (完全拿掉錯誤等號)
+        # 5. 現場寫入符合標準 QMK 陣列規範的 keymap.c 檔
         cat << 'EOF' > keyboards/fc980_ec/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-            [0] = {
+            = {
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
@@ -60,12 +60,15 @@ jobs:
         };
         EOF
         
-        # 6. 完全繞過 qmk CLI 指令，直接使用底層 Linux 的 GNU Make 進行強制實體編譯！
+        # 6. 底層 Makefile 強制實體編譯
         make fc980_ec:default || true
 
     - name: Upload Finished Firmware
       uses: actions/upload-artifact@v4
       with:
         name: fc980-ec-via-firmware
-        # 全域遞迴搜捕，強行把所有產出的單一 .bin 檔案抓出來
-        path: qmk_firmware/.build/*.bin
+        # 【全域滴水不漏搜捕】追蹤整個 qmk_firmware 目錄下所有副檔名，不管它生在哪裡通通抓進壓縮包！
+        path: |
+          qmk_firmware/**/*.bin
+          qmk_firmware/**/*.hex
+          qmk_firmware/**/*.elf
