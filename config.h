@@ -1,0 +1,6 @@
+#pragma once
+#define MATRIX_ROWS 6
+#define MATRIX_COLS 16
+#define MATRIX_ROW_PINS { A0, A1, A2, A3, A4, A5 }
+#define MATRIX_COL_PINS { B0, B1, B2, B3, B4, B5, B6, B7, B8, B9, B10, B12, B13, B14, B15, A8 }
+#define DIODE_DIRECTION COL2ROW
