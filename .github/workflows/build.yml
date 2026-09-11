@@ -11,12 +11,12 @@ jobs:
         python3 -m pip install qmk
         qmk setup -y -H ./qmk_firmware
 
-    - name: Force Overwrite Existing Mature Project and Compile
+    - name: Force Overwrite Pure VIA Project and Compile
       run: |
         cd qmk_firmware
         
-        # 1. 現場將 Keychron V5 官方專案的引腳與晶片規格，強行覆蓋為我們的 STM32F401 6x16 盲測規格
-        cat << 'EOF' > keyboards/keychron/v5/info.json
+        # 1. 現場將 wilba 官方 VIA 專案的 info.json 覆蓋為我們的 STM32F401 6x16 盲測規格 (引腳回歸標準代號)
+        cat << 'EOF' > keyboards/wilba_tech/wt60_a/info.json
         {
           "keyboard_name": "FC980 EC VIA REMAKE",
           "url": "https://github.com",
@@ -24,26 +24,24 @@ jobs:
           "width": 16,
           "height": 6,
           "matrix_pins": {
-            "cols": ["PIN_B0", "PIN_B1", "PIN_B2", "PIN_B3", "PIN_B4", "PIN_B5", "PIN_B6", "PIN_B7", "PIN_B8", "PIN_B9", "PIN_B10", "PIN_B12", "PIN_B13", "PIN_B14", "PIN_B15", "PIN_A8"],
-            "rows": ["PIN_A0", "PIN_A1", "PIN_A2", "PIN_A3", "PIN_A4", "PIN_A5"]
+            "cols": ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10", "B12", "B13", "B14", "B15", "A8"],
+            "rows": ["A0", "A1", "A2", "A3", "A4", "A5"]
           },
           "diode_direction": "COL2ROW",
           "processor": "STM32F401",
-          "bootloader": "stm32-dfu"
+          "bootloader": "stm32-dfu",
+          "features": {
+            "via": true,
+            "lto": true
+          }
         }
         EOF
         
-        # 2. 強制開啟 VIA 改鍵動態空間與 LTO 優化
-        cat << 'EOF' > keyboards/keychron/v5/rules.mk
-        VIA_ENABLE = yes
-        LTO_ENABLE = yes
-        EOF
-        
-        # 3. 現場寫入 96 顆按鍵完全填滿的 keymap.c 檔
-        cat << 'EOF' > keyboards/keychron/v5/ansi/keymaps/default/keymap.c
+        # 2. 現場寫入對齊 6x16 基礎矩陣的 keymap.c 檔
+        cat << 'EOF' > keyboards/wilba_tech/wt60_a/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-            = {
+            [0] = {
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
@@ -54,12 +52,11 @@ jobs:
         };
         EOF
         
-        # 4. 呼叫官方專案命令強制執行正式編譯
-        qmk compile -kb keychron/v5/ansi -km default
+        # 3. 呼叫官方正式名義，執行純淨無燈光干擾的 QMK 編譯
+        qmk compile -kb wilba_tech/wt60_a -km default
 
     - name: Upload Finished Firmware
       uses: actions/upload-artifact@v4
       with:
         name: fc980-ec-via-firmware
-        # 這次我們精準撈取正式編譯產出的單一完整二進位成品檔
         path: qmk_firmware/.build/*.bin
