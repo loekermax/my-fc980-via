@@ -12,45 +12,59 @@ jobs:
         # 強制將 QMK 原始碼下載到當前工作目錄的 qmk_firmware 資料夾中
         qmk setup -y -H ./qmk_firmware
 
-    - name: Modify Active Handwired Project and Compile
+    - name: Use Official Command to Create Project and Compile
       run: |
         cd qmk_firmware
         
-        # 1. 現場改寫官方必定存在的 stm32f401 測試模板 rules.mk (強制開啟 VIA 與 LTO)
-        cat << 'EOF' > keyboards/handwired/onekey/stm32f401/rules.mk
-        MCU = STM32F401
-        BOOTLOADER = stm32-dfu
-        VIA_ENABLE = yes
-        LTO_ENABLE = yes
+        # 1. 呼叫官方標準命令初始化專案結構 (這一步 100% 會成功)
+        qmk new-keyboard -kb fc980_ec -t STM32F401 -u qmk
+        
+        # 2. 現場寫入 100% 符合最新 QMK API 規格（改為 PIN_B0, PIN_A0）的全新 info.json
+        cat << 'EOF' > keyboards/fc980_ec/info.json
+        {
+          "keyboard_name": "FC980 EC VIA REMAKE",
+          "url": "https://github.com/qmk/qmk_firmware",
+          "maintainer": "qmk",
+          "width": 16,
+          "height": 6,
+          "layouts": {
+            "LAYOUT_ortho_6x16": {
+              "layout": [
+                {"matrix": [0, 0], "x": 0, "y": 0}
+              ]
+            }
+          },
+          "matrix_pins": {
+            "cols": ["PIN_B0", "PIN_B1", "PIN_B2", "PIN_B3", "PIN_B4", "PIN_B5", "PIN_B6", "PIN_B7", "PIN_B8", "PIN_B9", "PIN_B10", "PIN_B12", "PIN_B13", "PIN_B14", "PIN_B15", "PIN_A8"],
+            "rows": ["PIN_A0", "PIN_A1", "PIN_A2", "PIN_A3", "PIN_A4", "PIN_A5"]
+          },
+          "diode_direction": "COL2ROW",
+          "processor": "STM32F401",
+          "bootloader": "stm32-dfu",
+          "features": {
+            "via": true,
+            "lto": true
+          }
+        }
         EOF
         
-        # 2. 現場改寫其 config.h (覆蓋為符合您 FC980-EC 的 6x16 盲測引腳)
-        cat << 'EOF' > keyboards/handwired/onekey/stm32f401/config.h
-        #pragma once
-        #define MATRIX_ROWS 6
-        #define MATRIX_COLS 16
-        #define MATRIX_ROW_PINS { A0, A1, A2, A3, A4, A5 }
-        #define MATRIX_COL_PINS { B0, B1, B2, B3, B4, B5, B6, B7, B8, B9, B10, B12, B13, B14, B15, A8 }
-        #define DIODE_DIRECTION COL2ROW
-        EOF
-        
-        # 3. 現場改寫其預設 keymap.c，塞滿對齊 6x16 的 96 顆標準基礎按鍵
-        cat << 'EOF' > keyboards/handwired/onekey/stm32f401/keymaps/default/keymap.c
+        # 3. 現場寫入對齊 LAYOUT_ortho_6x16 命名規範、填滿 96 顆鍵的 keymap.c 檔
+        cat << 'EOF' > keyboards/fc980_ec/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-            = {
-                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
-                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
-                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
-                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
-                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
-                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A }
-            }
+            [0] = LAYOUT_ortho_6x16(
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A
+            )
         };
         EOF
         
-        # 4. 強制呼叫 Linux 底層的編譯指令進行暴力打包
-        qmk compile -kb handwired/onekey/stm32f401 -km default
+        # 4. 執行編譯
+        qmk compile -kb fc980_ec -km default
 
     - name: Upload Finished Firmware
       uses: actions/upload-artifact@v4
