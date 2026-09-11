@@ -28,7 +28,7 @@ jobs:
         qmk compile -kb fc980_ec -km default
 
     - name: Upload Firmware Artifact
-      uses: actions/artifacts@v4
+      uses: actions/upload-artifact@v4
       with:
         name: fc980-ec-via-firmware
         path: qmk_firmware/.build/*.bin
