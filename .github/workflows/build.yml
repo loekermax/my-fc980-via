@@ -15,14 +15,14 @@ jobs:
       run: |
         cd qmk_firmware
         
-        # 1. 呼叫官方標準指令，強行在完全乾淨的獨立手焊區 (handwired) 建立新專案，註冊 STM32F401 的 ARM 晶片身分
+        # 1. 呼叫官方標準指令，在 handwired 區建立獨立新專案
         qmk new-keyboard -kb handwired/fc980_ec_via -t STM32F401 -u qmk
         
-        # 2. 徹底砸碎它自動生成的 info.json，我們要改用 100% 不會被雲端 API 誤判的傳統 C 語言架構
+        # 2. 徹底刪除會卡規格的自動生成 JSON 檔案
         rm -f keyboards/handwired/fc980_ec_via/info.json
         rm -f keyboards/handwired/fc980_ec_via/keyboard.json
         
-        # 3. 現場寫入 C 語言版 rules.mk (強制指定 ARM 架構並解鎖 VIA 動態記憶體空間)
+        # 3. 現場寫入 C 語言版 rules.mk (解鎖 VIA 與 LTO)
         cat << 'EOF' > keyboards/handwired/fc980_ec_via/rules.mk
         MCU = STM32F401
         BOOTLOADER = stm32-dfu
@@ -30,7 +30,7 @@ jobs:
         LTO_ENABLE = yes
         EOF
         
-        # 4. 現場寫入 C 語言版 config.h (鎖定您 FC980-EC 實體電路板所需的 6 行 16 列盲測引腳)
+        # 4. 現場寫入 C 語言版 config.h (鎖定您 PCB 的 6x16 盲測引腳)
         cat << 'EOF' > keyboards/handwired/fc980_ec_via/config.h
         #pragma once
         #define MATRIX_ROWS 6
@@ -40,15 +40,15 @@ jobs:
         #define DIODE_DIRECTION COL2ROW
         EOF
         
-        # 5. 補齊編譯所需的實體硬體初始化代碼（fc980_ec_via.c 與 .h）
+        # 5. 【精準修正】補齊正確的 handwired/ 完整路徑，建立實體 C 語言頭文件
         echo '#include "fc980_ec_via.h"' > keyboards/handwired/fc980_ec_via/fc980_ec_via.c
-        echo '#pragma once' > keyboards/fc980_ec_via/fc980_ec_via.h
+        echo '#pragma once' > keyboards/handwired/fc980_ec_via/fc980_ec_via.h
         
-        # 6. 現場寫入符合標準 QMK 陣列規範、填滿 6x16 共 96 顆鍵的核心地圖 (keymap.c)
+        # 6. 現場寫入符合標準 QMK 陣列規範、填滿 6x16 的 keymap.c 檔
         cat << 'EOF' > keyboards/handwired/fc980_ec_via/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-             = {
+            [0] = {
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
@@ -59,12 +59,11 @@ jobs:
         };
         EOF
         
-        # 7. 使用 Linux 底層核心指令，直接強制編譯這個完全乾淨獨立的專案
+        # 7. 使用 Linux 底層 make 強制獨立編譯
         make handwired/fc980_ec_via:default
 
     - name: Upload Finished Firmware
       uses: actions/upload-artifact@v4
       with:
         name: fc980-ec-via-firmware
-        # 【精準攔截】這次排除掉垃圾 .hex，我們只抓大於 30KB 以上、真正成型的完整 ARM 韌體 .bin 檔案！
         path: qmk_firmware/.build/*.bin
