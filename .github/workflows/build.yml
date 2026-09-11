@@ -18,63 +18,52 @@ jobs:
         # 1. 初始化 fc980_ec 專案結構
         qmk new-keyboard -kb fc980_ec -t STM32F401 -u qmk
         
-        # 2. 清理垃圾 JSON 檔
+        # 2. 清理自動生成的垃圾 JSON 檔
         rm -f keyboards/fc980_ec/keyboard.json
+        rm -f keyboards/fc980_ec/info.json
         
-        # 3. 寫入乾淨的硬體設定書 info.json
-        cat << 'EOF' > keyboards/fc980_ec/info.json
-        {
-          "keyboard_name": "FC980 EC VIA REMAKE",
-          "url": "https://github.com",
-          "maintainer": "qmk",
-          "width": 16,
-          "height": 6,
-          "layouts": {
-            "LAYOUT_ortho_6x16": {
-              "layout": [
-                {"matrix":, "x": 0, "y": 0}
-              ]
-            }
-          },
-          "matrix_pins": {
-            "cols": ["PIN_B0", "PIN_B1", "PIN_B2", "PIN_B3", "PIN_B4", "PIN_B5", "PIN_B6", "PIN_B7", "PIN_B8", "PIN_B9", "PIN_B10", "PIN_B12", "PIN_B13", "PIN_B14", "PIN_B15", "PIN_A8"],
-            "rows": ["PIN_A0", "PIN_A1", "PIN_A2", "PIN_A3", "PIN_A4", "PIN_A5"]
-          },
-          "diode_direction": "COL2ROW",
-          "processor": "STM32F401",
-          "bootloader": "stm32-dfu"
-        }
-        EOF
-        
-        # 4. 傳統 rules.mk 強制解鎖 VIA 空間
+        # 3. 寫入傳統 rules.mk 強制解鎖 VIA 空間
         cat << 'EOF' > keyboards/fc980_ec/rules.mk
+        MCU = STM32F401
+        BOOTLOADER = stm32-dfu
         VIA_ENABLE = yes
         LTO_ENABLE = yes
+        EOF
+        
+        # 4. 【關鍵修正】引腳名稱必須完整寫成 PIN_A0, PIN_B0 標準巨集
+        cat << 'EOF' > keyboards/fc980_ec/config.h
+        #pragma once
+        #define MATRIX_ROWS 6
+        #define MATRIX_COLS 16
+        #define MATRIX_ROW_PINS { PIN_A0, PIN_A1, PIN_A2, PIN_A3, PIN_A4, PIN_A5 }
+        #define MATRIX_COL_PINS { PIN_B0, PIN_B1, PIN_B2, PIN_B3, PIN_B4, PIN_B5, PIN_B6, PIN_B7, PIN_B8, PIN_B9, PIN_B10, PIN_B12, PIN_B13, PIN_B14, PIN_B15, PIN_A8 }
+        #define DIODE_DIRECTION COL2ROW
         EOF
         
         # 5. 填滿 96 顆鍵的 keymap.c 檔
         cat << 'EOF' > keyboards/fc980_ec/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-            = LAYOUT_ortho_6x16(
-                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
-                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
-                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
-                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
-                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
-                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A
-            )
+            = {
+                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
+                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
+                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
+                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
+                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
+                { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A }
+            }
         };
         EOF
         
-        # 6. 暴力編譯
-        make fc980_ec:default
+        # 6. 強制執行編編譯，若失敗則中斷防止誤報成功
+        make fc980_ec:default || exit 1
 
     - name: Upload Finished Firmware
       uses: actions/upload-artifact@v4
       with:
         name: fc980-ec-via-firmware
-        # 【核心修正】擴大搜尋範圍，強行把整個目錄底下所有生成的 .bin 檔案通通抓出來打包！
+        # 【格式修正】修正 YAML 的多行搜尋語法，全面搜捕產出的二進位檔
         path: |
           qmk_firmware/*.bin
           qmk_firmware/.build/*.bin
+          qmk_firmware/.build/artifacts/*.bin
