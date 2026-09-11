@@ -14,11 +14,11 @@ jobs:
     - name: Compile Universal 1800 ARM Firmware
       run: |
         cd qmk_firmware
-        # 使用官方現成、同樣採用 STM32F401 且內建 VIA 的 1800 布局專案進行強制打包
+        # 使用官方現成、同樣採用 STM32F401 且內建 VIA 的 1800 布局專案進行打包
         qmk compile -kb cannonkeys/anubis -km default
 
     - name: Upload Firmware Artifact
-      uses: actions/artifacts@v4
+      uses: actions/upload-artifact@v4  # 修正為 100% 正確的官方上傳套件
       with:
         name: fc980-ec-via-firmware
         path: qmk_firmware/.build/*.bin
