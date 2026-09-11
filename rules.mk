@@ -1,0 +1,4 @@
+MCU = STM32F401
+BOOTLOADER = stm32-dfu
+VIA_ENABLE = yes
+LTO_ENABLE = yes
