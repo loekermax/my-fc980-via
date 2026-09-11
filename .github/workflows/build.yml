@@ -19,7 +19,7 @@ jobs:
         # 1. 呼叫官方標準命令初始化 fc980_ec 專案結構
         qmk new-keyboard -kb fc980_ec -t STM32F401 -u qmk
         
-        # 2. 現場寫入 100% 滿足新版 QMK 嚴格語法檢查（補齊網址與佈局座標）的 info.json
+        # 2. 現場寫入 100% 修正 JSON 語法錯誤、沒有任何逗號衝突的 info.json
         cat << 'EOF' > keyboards/fc980_ec/info.json
         {
           "keyboard_name": "FC980 EC VIA REMAKE",
