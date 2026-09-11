@@ -16,10 +16,10 @@ jobs:
       run: |
         cd qmk_firmware
         
-        # 1. 呼叫官方標準命令，直接現場誕生一個絕對合法的 fc980_ec 專案目錄（指定處理器與作者）
-        qmk new-keyboard -kb fc980_ec -t stm32f401 -u qmk
+        # 1. 修正 MCU 參數為大寫 'STM32F401'，讓官方命令能成功初始化 fc980_ec 專案結構
+        qmk new-keyboard -kb fc980_ec -t STM32F401 -u qmk
         
-        # 2. 現場寫入 100% 正確的硬體規格書 (info.json)，強行指定 6x16 引腳並開啟 VIA
+        # 2. 現場寫入 100% 符合新版規範的硬體規格書 (info.json)，強行指定 6x16 引腳並開啟 VIA
         cat << 'EOF' > keyboards/fc980_ec/info.json
         {
           "keyboard_name": "FC980 EC VIA REMAKE",
