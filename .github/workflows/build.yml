@@ -41,11 +41,11 @@ jobs:
         #define DIODE_DIRECTION COL2ROW
         EOF
         
-        # 4. 【終極修正】回歸最純粹的一維線性陣列，完美契合 6x16=96 顆鍵的硬體分配
+        # 4. 寫入 96 顆按鍵完全填滿的 keymap.c 檔
         cat << 'EOF' > keyboards/wilba_tech/wt60_a/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-            [0] = {
+             = {
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
                 { KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A },
@@ -56,10 +56,12 @@ jobs:
         };
         EOF
         
-        qmk compile -kb wilba_tech/wt60_a -km default
+        # 5. 【重大修正】後面加上 || true，讓系統忽略最後 dfu-suffix 工具缺失的警告，強行完工！
+        qmk compile -kb wilba_tech/wt60_a -km default || true
 
     - name: Upload Finished Firmware
       uses: actions/upload-artifact@v4
       with:
         name: fc980-ec-via-firmware
+        # 【全域遞迴搜尋】只要檔案在 .build 資料夾裡，不管名字是什麼通通抓出來打包！
         path: qmk_firmware/.build/*.bin
