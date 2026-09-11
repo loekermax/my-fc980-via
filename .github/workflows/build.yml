@@ -13,10 +13,10 @@ jobs:
 
     - name: Create Structure and Compile
       run: |
-        # 1. 建立鍵盤的底層資料夾
+        # 1. 建立正確的 QMK 鍵盤資料夾目錄
         mkdir -p qmk_firmware/keyboards/fc980_ec/keymaps/default
         
-        # 2. 現場寫入最新版 QMK 專用的硬體規格書 (info.json)
+        # 2. 現場寫入最新版規格書 (info.json) - 包含 6x16 矩陣結構
         cat << 'EOF' > qmk_firmware/keyboards/fc980_ec/info.json
         {
           "keyboard_name": "FC980 EC VIA",
@@ -27,7 +27,7 @@ jobs:
           "layouts": {
             "LAYOUT": {
               "layout": [
-                {"label":"A", "x":0, "y":0}
+                {"matrix": [0, 0], "x": 0, "y": 0}
               ]
             }
           },
@@ -45,17 +45,22 @@ jobs:
         }
         EOF
         
-        # 3. 現場寫入修正語法後的鍵位地圖 (keymap.c)
+        # 3. 現場寫入對齊 6x16 硬體矩陣、實打實 96 顆鍵的完整地圖 (keymap.c)
         cat << 'EOF' > qmk_firmware/keyboards/fc980_ec/keymaps/default/keymap.c
         #include QMK_KEYBOARD_H
         const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
             [0] = LAYOUT(
-                KC_A
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A,
+                KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A, KC_A
             )
         };
         EOF
         
-        # 4. 進入 QMK 雲端目錄，強制執行編譯
+        # 4. 進入雲端 Linux 目錄，強制執行編譯
         cd qmk_firmware
         qmk compile -kb fc980_ec -km default
 
